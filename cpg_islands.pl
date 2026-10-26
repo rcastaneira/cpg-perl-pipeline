@@ -43,8 +43,33 @@ for my $chrom (@order) {
     my $L   = length $seq;
     next if $L < $window;
     my ($start, $end);   # current merged island (0-based, half-open)
+    # ---------------------------------------------------------------
+    # ROLLING COUNTS (your edit). Count C, G and CG once for the first
+    # window, then update the counts as the window slides.
+    # Replace each FILL_ME below with a position or a letter.
+    # ---------------------------------------------------------------
+    my $first = substr($seq, 0, $window);
+    my $c  = ($first =~ tr/C//);
+    my $g  = ($first =~ tr/G//);
+    my $cg = () = $first =~ /CG/g;
+    my $pos = 0;    # start of the window the counts currently describe
+
     for (my $i = 0; $i + $window <= $L; $i += $step) {
-        my ($gc, $oe) = stats(substr($seq, $i, $window));
+        # slide the counts forward one base at a time until they match $i
+        while ($pos < $i) {
+            my $out = substr($seq, $pos, 1);          # base leaving (window's first base)
+            my $in  = substr($seq, $pos + $window, 1);          # base entering (just past window's end)
+            $c-- if $out eq 'C';
+            $g-- if $out eq 'G';
+            $c++ if $in  eq 'C';                     # a letter, in quotes
+            $g++ if $in  eq 'G';                     # a letter, in quotes
+            $cg-- if substr($seq, $pos, 2) eq 'CG';   # pair leaving
+            $cg++ if substr($seq, $pos + $window - 1, 2) eq 'CG';   # pair entering
+            $pos++;
+        }
+        my $gc = ($c + $g) / $window;
+        my $oe = ($c && $g) ? ($cg * $window) / ($c * $g) : 0;
+        # ------------------------- end of your edit -------------------
         if ($gc >= $min_gc && $oe >= $min_oe) {
             if (defined $end && $i <= $end) { $end = $i + $window; }   # extend
             else { report($chrom, $start, $end, $seq) if defined $start;
