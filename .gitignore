@@ -1,0 +1,16 @@
+# macOS and editor clutter
+.DS_Store
+*.swp
+.vscode/
+
+# Large or generated data stays out of the repo
+*.fa.fai
+*.bam
+*.bai
+*.bed.gz
+*.bedmethyl*
+results/
+data/large/
+
+# Keep the small test FASTA
+!test.fa
